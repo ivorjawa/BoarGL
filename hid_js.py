@@ -1,4 +1,5 @@
-import hid, atexit
+#import hid
+import atexit
 
 js = None
 def init_js():

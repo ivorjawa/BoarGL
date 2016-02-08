@@ -1,8 +1,8 @@
 from OpenGL.GL import *
 
 
-import timing
-timings = timing.Timing()
+import Drift.timing
+timings = Drift.timing.Timing()
 
 @timings
 def fountain_np(num):

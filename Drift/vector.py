@@ -1,9 +1,6 @@
-
-
 #Vector class
 #Author - Ian Johnson | enjalot@gmail.com
 #http://docs.scipy.org/doc/numpy/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array
-
 import numpy as np
 import math
 

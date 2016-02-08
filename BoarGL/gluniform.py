@@ -1,4 +1,9 @@
 #!/usr/bin/env python2.7
+
+"""
+Module for adding shared uniform block variables in a clean way
+"""
+
 import numpy as np
 import struct, array, ctypes
 
@@ -7,7 +12,6 @@ import OpenGL.GL as gl
 floatsize = 4
 intsize = 4
 
-# this is some sort of variable translater system
 
 class UBArrayVar(object):
     def __repr__(self):
@@ -66,7 +70,7 @@ class UBVar(object):
         else:
             raise RuntimeError, "I can't deal with %s: %s" % (str(value), str(t))
 
-class UBTalker(object):
+class UniformBlock(object):
     def __init__(self, blockname):
         self.blockname = blockname
         self.lut = {}
@@ -100,7 +104,7 @@ class UBTalker(object):
         return self.vars[self.lut[varname]]
     def locate(self, varname):
         var = self.getvar(varname)
-        #print "UBTalker.locate called on %s with class %s" % (str(var), type(var))
+        #print "UniformBlock.locate called on %s with class %s" % (str(var), type(var))
         return var.offset, var.size
     def locate_elt(self, varname, index):
         var = self.vars[self.lut[varname]]
@@ -128,7 +132,7 @@ class UBTalker(object):
         ctypes.memmove(to_p, from_p, size)
 
 def test():
-    ubt = UBTalker("shader_data")
+    ubt = UniformBlock("shader_data")
     u_view_var = UBVar("u_view", np.eye(4))
     u_blobby_var = UBArrayVar("u_blobby", np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
     u_lights_var = UBArrayVar("u_lights",

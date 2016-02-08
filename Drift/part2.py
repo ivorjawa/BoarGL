@@ -7,13 +7,13 @@ import pyopencl as cl
 import sys, os
 
 import numpy
-import timing
+import Drift.timing
 
-timings = timing.Timing()
+timings = Drift.timing.Timing()
 class Part2(object):
     def __init__(self, num, dt, *args, **kwargs):
         self.clinit()
-        self.loadProgram("part2.cl");
+        self.loadProgram("Drift/part2.cl");
 
         self.num = num
         self.dt = numpy.float32(dt)

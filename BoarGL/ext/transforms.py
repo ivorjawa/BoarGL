@@ -6,14 +6,15 @@ Very simple transformation library that is needed for some examples.
 Note that functions that take a matrix as input generally operate on that
 matrix in place.
 """
-
 from __future__ import division
-
-# Note: we use functions (e.g. sin) from math module because they're faster
 
 import math
 import numpy as np
 from numpy.linalg import norm
+
+
+# Note: we use functions (e.g. sin) from math module because they're faster
+
 
 
 def translate(M, x, y=None, z=None):

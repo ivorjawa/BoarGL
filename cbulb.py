@@ -2,37 +2,26 @@ from __future__ import division
 
 import os
 import numpy as np
-A = np.array
 import math as m
 import OpenGL.GL as gl
 
-from transforms import translate, rotate
 
-import trans_gl  #opengl utilities, all the various advanced opengl block stuff.  covers some same ground as scrunlib
-import trans_draw # higher level convenience objects, program and vertext bundles
-import cube
+import BoarGL.glbase
+import BoarGL.gldraw
+import BoarGL.geom.cube
 
-d2r = lambda deg: (deg/180.0)*m.pi
+A = np.array
+
+from BoarGL.glbase import d2r
+
 # theta [spherical -> cartesian], lambda (mercator) -> longitude, x, u
 # phi -> latitude, y, v
 
 def sph_cart(lon, lat, scale = 1):
     "spherical to cartesian mapping"
-    #print "lon: %s, lat: %s, scale: %s" % (lon, lat, scale)
     lon = d2r(lon)
     lat = d2r(lat)
 
-    # newer
-    #x = abs(m.sin(lat))*m.cos(lon)
-    #y = abs(m.sin(lat))*m.sin(lon)
-    #z = m.cos(lat)*sgn(lat)
-
-    # oldest
-    #x = m.cos(lon)*m.cos(phi)
-    #y = m.sin(theta)*m.cos(phi)
-    #z = m.sin(phi)
-
-    # newest
     rsl = m.cos(lat)
     y = m.sin(lat)
     x = rsl*m.cos(lon)
@@ -104,22 +93,22 @@ def sphere_geom(tx=0, ty=0, tz=0, scale=.25):
             inds.append(stash[1])
             rpt = True
 
-    verts = trans_draw.flar(verts)# * scale
-    norms = trans_draw.flar(norms)
+    verts = BoarGL.gldraw.flar(verts)# * scale
+    norms = BoarGL.gldraw.flar(norms)
     cols = np.array(cols)
     uv = np.array(uv)
     #print "verts: ", verts.shape
     #print "norms: ", norms.shape
     #print "cols: ", cols.shape
     #print "uvs: ", uv.shape
-    vb1 = trans_draw.VertexBundle(verts, norms, cols, uv)
+    vb1 = BoarGL.gldraw.VertexBundle(verts, norms, cols, uv)
     return vb1
 
 class Bulb(object):
     def __init__(self, vershade, fragshade, bulb_index, bulb_coords):
         self.vershade = vershade
         self.fragshade = fragshade
-        self.program = trans_gl.ProgBundle(self.vershade, self.fragshade)
+        self.program = BoarGL.glbase.ProgBundle(self.vershade, self.fragshade)
 
 
 
@@ -128,12 +117,12 @@ class Bulb(object):
         #print "%d indices" % len(filled_ind)
         #print "index: %d, bulb cooard: %s" % (bulb_index, str(bulb_coords[bulb_index]))
         #self.num_inds = len(filled_ind)
-        #self.vao = trans_gl.copyBuffer(vertices, filled_ind)
+        #self.vao = boargl_base.copyBuffer(vertices, filled_ind)
 
         bci = bulb_coords[bulb_index]
         self.vb = sphere_geom(bci[0], bci[1], bci[2], .03)
         self.vb.bufferize()
-        self.vao = trans_gl.copyBuffer(self.vb.cooked_faces, self.vb.cooked_ind)
+        self.vao = BoarGL.glbase.copyBuffer(self.vb.cooked_faces, self.vb.cooked_ind)
 
         rmat = np.eye(4)
         #translate(rmat, bci[0], bci[1], bci[2])

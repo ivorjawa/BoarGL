@@ -9,9 +9,52 @@ import OpenGL.GLUT as glut
 from PIL import Image
 import math as m
 
-import ubble
+import BoarGL.gluniform
 
-def init_gl(argv, win_name="Lighted Cube"):
+
+def geomBuffer(g):
+    "packs gl data from a series of arrays for opengl consumption"
+    vtype = [('a_position', np.float32, 4),
+             ('a_texcoord', np.float32, 2),
+             ('a_normal'  , np.float32, 3),
+             ('a_color',    np.float32, 4)]
+
+
+    itype = np.uint32
+    p = g.verts
+    n = g.norms #[g.norms[x] for x in range(0, 36, 6)]
+    c = g.cols
+    t = g.tex_coord[0]
+
+
+    faces_p = g.inds.flatten()
+    nv = len(faces_p)
+    faces_c = faces_p
+    faces_t = g.tex_coord_ind[0].flatten()
+    faces_n = faces_p
+
+    vertices = np.zeros(nv,vtype)
+    try:
+        vertices['a_position'] = p[faces_p]
+        vertices['a_normal'] = n[faces_n]
+        vertices['a_color'] = c[faces_c]
+        vertices['a_texcoord'] = t[faces_t]
+    except Exception, e:
+        print "verts(p): %s" % str(p)
+        print "inds: %s" % str(faces_p)
+        print "normals(n) %s" % str(n)
+        print "ni: %s" % str(faces_n)
+        print "faces_c: %s" % str(faces_c)
+        print "c: %s" % str(c)
+        print "faces_t: %s" % str(faces_t)
+        raise
+
+    filled = np.array(range(nv), dtype=np.uint32)
+
+    return vertices, filled
+
+
+def init_gl(argv, win_name="BoarGL Application"):
     # Glut init
     # --------------------------------------
     glut.glutInit(sys.argv)
@@ -19,25 +62,31 @@ def init_gl(argv, win_name="Lighted Cube"):
                              glut.GLUT_RGBA |
                              glut.GLUT_DEPTH  |
                              glut.GLUT_3_2_CORE_PROFILE)
-    glut.glutCreateWindow(win_name)
+
+    if "-w" in argv:
+        print "creating window"
+        glut.glutCreateWindow(win_name)
+    else:
+        print "going fullscreen"
+        glut.glutGameModeString("2880x1800:32@60")
+        # The application will enter fullscreen
+        glut.glutEnterGameMode()
+
     print gl.glGetString(gl.GL_RENDERER)
     print gl.glGetString(gl.GL_VERSION)
 
     # OpenGL initalization
-    # --------------------------------------
-    # http://colorizer.org
-    # np.array([38, 90, 120]) * 1/255.0
-    gl.glClearColor(.149,0.353,0.470,1) #// nice grey blue
-    #gl.glClearColor(2/255.0, 31/255.0, 131/255.0, 1) # teton blue
-    #gl.glClearColor(.1, .1, .1, 1) # go full black when we have
-    # walls and a roof and floor
+    gl.glClearColor(0, 0, 0, 1)
+
+    # hide mouse cursor
+    glut.glutSetCursor(glut.GLUT_CURSOR_NONE)
 
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
     gl.glEnable(gl.GL_CULL_FACE);
     gl.glCullFace(gl.GL_BACK);
-    gl.glFrontFace(gl.GL_CW);
+    gl.glFrontFace(gl.GL_CCW);
 
     gl.glEnable(gl.GL_DEPTH_TEST)
     gl.glDepthMask(gl.GL_TRUE);
@@ -115,48 +164,8 @@ def loadShaders(strVS, strFS):
 
     return program
 
-def geomBuffer(g):
-        vtype = [('a_position', np.float32, 4),
-                 ('a_texcoord', np.float32, 2),
-                 ('a_normal'  , np.float32, 3),
-                 ('a_color',    np.float32, 4)]
-
-
-        itype = np.uint32
-        p = g.verts
-        n = g.norms
-        c = g.cols
-        t = g.tex_coord[0]
-
-
-        faces_p = g.inds.flatten()
-        nv = len(faces_p)
-        faces_c = faces_p
-        faces_t = g.tex_coord_ind[0].flatten()
-        faces_n = faces_p
-
-        vertices = np.zeros(nv,vtype)
-        try:
-            vertices['a_position'] = p[faces_p]
-            vertices['a_normal'] = n[faces_n]
-            vertices['a_color'] = c[faces_c]
-            vertices['a_texcoord'] = t[faces_t]
-        except Exception, e:
-            print "verts(p): %s" % str(p)
-            print "inds: %s" % str(faces_p)
-            print "normals(n) %s" % str(n)
-            print "ni: %s" % str(faces_n)
-            print "faces_c: %s" % str(faces_c)
-            print "c: %s" % str(c)
-            print "faces_t: %s" % str(faces_t)
-            raise
-
-        inds = np.array(range(nv), dtype=np.uint32)
-
-        return vertices, inds
-
 def copyBuffer(vertexData, indexData):
-    "packs the output of a scrunlib.geomBuffer into a form that opengl can use"
+    "packs the output of a geomBuffer into a form that opengl can use"
 
     # set up vertex array object (VAO)
     vao = gl.glGenVertexArrays(1)
@@ -265,7 +274,7 @@ class VUnif(GLV): # uniform
             raise RuntimeError, "Can't deal with this shit: %s, %s" % (str(obj), obj.__class__)
         return (unif, obj)
 
-ub_binding_count = 0
+ub_binding_count = 0 # FIXME I think this is sketchy as hell
 def gen_ub():
     global ub_binding_count
     ubo = gl.glGenBuffers(1)
@@ -282,7 +291,8 @@ def get_ub(listy, record_byte_size):
     gl.glBindBuffer(gl.GL_UNIFORM_BUFFER, 0)
     return ubo, binding_point_index
 
-def get_struct_ub(talker):
+def pack_copy(talker):
+    "gets packed representation of talker, binds it and sends the data to opengl"
     ubo, binding_point_index = get_ub(talker.packed(), 1)
     talker.ubo = ubo
     talker.bpi = binding_point_index
@@ -354,27 +364,3 @@ class ProgBundle(object):
 
 d2r = lambda deg: (deg/180.0)*m.pi
 
-def sph_cart(lon, lat):
-    "spherical to cartesian mapping"
-    lon = d2r(lon)
-    lat = d2r(lat)
-
-    # newer
-    #x = abs(m.sin(lat))*m.cos(lon)
-    #y = abs(m.sin(lat))*m.sin(lon)
-    #z = m.cos(lat)*sgn(lat)
-
-    # oldest
-    #x = m.cos(lon)*m.cos(phi)
-    #y = m.sin(theta)*m.cos(phi)
-    #z = m.sin(phi)
-
-    # newest
-    rsl = m.cos(lat)
-    y = m.sin(lat)
-    x = rsl*m.cos(lon)
-    z = rsl*m.sin(lon)
-
-    return (x, y, z)
-
-sgn = lambda x: x != 0 and x/abs(x) or 0

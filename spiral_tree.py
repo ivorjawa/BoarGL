@@ -2,14 +2,20 @@ from __future__ import division
 
 import os
 import numpy as np
-A = np.array
 import math as m
 import OpenGL.GL as gl
 import cv2, cv
 
-import trans_gl, trans_draw
+import BoarGL.glbase
+import BoarGL.gldraw
 
-from trans_gl import sph_cart, d2r
+from BoarGL.glbase import d2r
+import BoarGL.glbase
+
+
+A = np.array
+
+
 
 
 bulb_inds = [1,111,168,211,247,278,307,333,357,379,401,
@@ -21,7 +27,7 @@ class Tree(object):
         print "starting tree init ..."
         self.vershade = vershade
         self.fragshade = fragshade
-        self.program = trans_gl.ProgBundle(self.vershade, self.fragshade)
+        self.program = BoarGL.glbase.ProgBundle(self.vershade, self.fragshade)
         nlights = 30
         self.lights = [[0, 0, 0, 1]] * 30
         mul = 10
@@ -83,16 +89,16 @@ class Tree(object):
             cols_b = cols_b + [col2, col2]
 
         #print "about to bundle"
-        vb1 = trans_draw.VertexBundle(verts_f, norms_f, cols_f, uvs)
-        vb2 = trans_draw.VertexBundle(verts_b, norms_b, cols_b, uvs)
+        vb1 = BoarGL.gldraw.VertexBundle(verts_f, norms_f, cols_f, uvs)
+        vb2 = BoarGL.gldraw.VertexBundle(verts_b, norms_b, cols_b, uvs)
         #print "about to glue"
-        self.vb = trans_draw.VertexBundle.glue_strips(vb1, vb2)
+        self.vb = BoarGL.gldraw.VertexBundle.glue_strips(vb1, vb2)
         #print "about to bufferize"
         self.vb.bufferize()
 
         #print "have %d faces, and %d indices." % (len(self.vb.cooked_faces), len(self.vb.cooked_ind))
         #print "about to copy buffer"
-        self.vao = trans_gl.copyBuffer(self.vb.cooked_faces, self.vb.cooked_ind)
+        self.vao = BoarGL.glbase.copyBuffer(self.vb.cooked_faces, self.vb.cooked_ind)
         #print "copied buffer"
 
         rmat = np.eye(4)
