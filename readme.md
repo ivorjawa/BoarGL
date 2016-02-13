@@ -2,7 +2,7 @@
 
 An attempt to demonstrate various OpenGL 3.2+ techniques, providing a clean python library simplifying many of OpenGL's functions.
 
-Written in python 2.7.
+Written in python 2.7.  This thing has been tested on OS X Yosemite, and nowhere else.
 
 Usage:  python spectree.py [-w] [-spectrum] [-xmas]
 
