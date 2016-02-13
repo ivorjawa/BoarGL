@@ -128,10 +128,6 @@ class SpecTree(BoarDriver):
             drawable.draw()
 
         glut.glutSwapBuffers()
-    def get_lights(self):
-        retval = self.fft_get_lights()
-        #retval = self.spectrum_get_lights()
-        return retval
     def reshape(self, width, height):
         self.win_width = width
         self.win_height = height
