@@ -2,6 +2,17 @@
 
 An attempt to demonstrate various OpenGL 3.2+ techniques, providing a clean python library simplifying many of OpenGL's functions.
 
+Written in python 2.7.
+
+Usage:  python spectree.py [-w] [-spectrum] [-xmas]
+
+ * -w runs in window mode.
+ * -spectrum pulses a spectrum
+ * -xmas makes a 4-color christmas tree display 
+ * by default listens to the default microphone and bases the light show on an FFT
+
+[Potato-quality video of it running in FFT mode](https://www.youtube.com/watch?v=OJ_7f4Uw-wU)
+
 ## List of components
 
 1. `transforms.py` comes from [Vispy](http://vispy.org)
